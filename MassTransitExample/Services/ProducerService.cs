@@ -18,7 +18,8 @@ namespace MassTransitExample.Services
         public async Task SendToTenant<TEvent>(TEvent @event, string tenantCode) where TEvent : IntegrationBaseEvent
         {
             var eventName = @event.GetType().Name;
-            var endpointUri = new Uri($"queue:{tenantCode}_{eventName}");
+            // queue Created in RabbitMQ will be: {tenantCode}_{eventName}, not "queue:{tenantCode}_{eventName}" !!!
+            var endpointUri = new Uri($"queue:{tenantCode}_{eventName}"); 
             var endpoint = await _endpointProvider.GetSendEndpoint(endpointUri);
             _logger.LogInformation($"Sending {eventName} with id: {@event.Id} to endpoint: {endpointUri}");
             await endpoint.Send(@event);
