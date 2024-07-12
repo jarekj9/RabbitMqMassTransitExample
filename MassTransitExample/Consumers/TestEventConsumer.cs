@@ -11,10 +11,11 @@ namespace MassTransitExample.Consumers
             _logger = logger;
         }
 
-        public async Task Consume(ConsumeContext<TestEvent> context)
+        public Task Consume(ConsumeContext<TestEvent> context)
         {
             var eventData = context.Message.EventData;
             _logger.LogInformation($"Consumed new {nameof(TestEvent)} with Id: {context.Message.Id}");
+            return Task.CompletedTask;
         }
     }
 }
