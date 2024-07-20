@@ -53,7 +53,7 @@ builder.Services.AddMassTransit(config =>
                 s.Protocol = SslProtocols.Tls12;
                 s.ServerName = rabbitMqTlsConfig["ServerCertCommonName"];
                 s.AllowPolicyErrors(SslPolicyErrors.RemoteCertificateChainErrors);
-                s.Certificate = GetCertificate("Properties/certificates/client_certificate.pem", "sdfsfsdfasf2348fv983298423krdsfv889893423jhfewjsdf324");
+                s.Certificate = GetCertificate(rabbitMqTlsConfig["ClientCertPath"], rabbitMqTlsConfig["ClientCertPassword"]);
             });
         });
         cfg.ReceiveEndpoint($"{queuePrefix}_{nameof(TestEvent)}", c => { c.ConfigureConsumer<TestEventConsumer>(context); });
