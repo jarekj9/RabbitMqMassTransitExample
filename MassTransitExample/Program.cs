@@ -22,7 +22,7 @@ builder.Services.AddScoped<IProducerService, ProducerService>();
 var queuePrefix = "tenant1";
 
 
-// Masstransit Non-TLS:
+// Masstransit Non-TLS with connection string:
 //builder.Services.AddMassTransit(config =>
 //{
 //    config.AddConsumer<TestEventConsumer>();
@@ -35,7 +35,7 @@ var queuePrefix = "tenant1";
 //});
 
 
-// Masstransit TLS:
+// Masstransit TLS with option to disable:
 ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
 builder.Services.AddMassTransit(config =>
 {
@@ -44,18 +44,29 @@ builder.Services.AddMassTransit(config =>
     {
         config.AddConsumer<TestEventConsumer>();
         var rabbitMqTlsConfig = builder.Configuration.GetSection("RabbitMqTlsConfig");
-        cfg.Host(new Uri(rabbitMqTlsConfig["RabbitMqRootUri"]), h =>
-        {
-            h.Username(rabbitMqTlsConfig["UserName"]);
-            h.Password(rabbitMqTlsConfig["Password"]);
-            h.UseSsl(s =>
+        if (rabbitMqTlsConfig.GetValue<bool>("UseTls"))
+        { 
+            cfg.Host(new Uri(rabbitMqTlsConfig["RabbitMqRootUri"]), h =>
             {
-                s.Protocol = SslProtocols.Tls12;
-                s.ServerName = rabbitMqTlsConfig["ServerCertCommonName"];
-                s.AllowPolicyErrors(SslPolicyErrors.RemoteCertificateChainErrors);
-                s.Certificate = GetCertificate(rabbitMqTlsConfig["ClientCertPath"], rabbitMqTlsConfig["ClientCertPassword"]);
+                h.Username(rabbitMqTlsConfig["UserName"]);
+                h.Password(rabbitMqTlsConfig["Password"]);
+                h.UseSsl(s =>
+                {
+                    s.Protocol = SslProtocols.Tls12;
+                    s.ServerName = rabbitMqTlsConfig["ServerCertCommonName"];
+                    s.AllowPolicyErrors(SslPolicyErrors.RemoteCertificateChainErrors);
+                    s.Certificate = GetCertificate(rabbitMqTlsConfig["ClientCertPath"], rabbitMqTlsConfig["ClientCertPassword"]);
+                });
             });
-        });
+        }
+        else
+        {
+            cfg.Host(new Uri(rabbitMqTlsConfig["RabbitMqRootUri"]), h =>
+            {
+                h.Username(rabbitMqTlsConfig["UserName"]);
+                h.Password(rabbitMqTlsConfig["Password"]);
+            });
+        }
         cfg.ReceiveEndpoint($"{queuePrefix}_{nameof(TestEvent)}", c => { c.ConfigureConsumer<TestEventConsumer>(context); });
 
     });
